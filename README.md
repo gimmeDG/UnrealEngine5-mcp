@@ -44,7 +44,7 @@ Includes RAG-powered Python scripting with Unreal Python API documentation.
 │  │  • rag_tool       - API search & Python execution      │ │
 │  └────────────────────────────────────────────────────────┘ │
 └──────────────────────────┬──────────────────────────────────┘
-                           │ TCP (localhost:55557)
+                           │ TCP
 ┌──────────────────────────┴──────────────────────────────────┐
 │                 Unreal Engine C++ Plugin                     │
 │  ┌────────────────────────────────────────────────────────┐ │
@@ -66,11 +66,11 @@ RAG System (BM25):
 
 ### Requirements
 
-| Component | Version | Notes |
-|-----------|---------|-------|
-| **Unreal Engine** | 5.6+ | Required for Python 3.11 compatibility |
-| **Python** | 3.11 | Must match UE5.6 embedded Python version |
-| **Claude Desktop** or **Cursor** | Latest | MCP client for LLM integration |
+| Component | Version |
+|-----------|---------|
+| **Unreal Engine** | 5.6+ |
+| **Python** | 3.11 |
+| **Claude Desktop** or **Cursor** | Latest |
 
 > **Note:** `uv` package manager is recommended but will be installed automatically if not present.
 
@@ -84,13 +84,9 @@ cd UnrealEngine5-mcp
 ### 2. Setup Unreal Engine Plugin
 
 1. Copy `Plugins/UnrealEngineMCP` folder to your Unreal project's `Plugins/` directory
-2. Regenerate project files:
-   - **Windows**: Right-click `.uproject` → "Generate Visual Studio project files"
-   - **macOS**: Right-click `.uproject` → "Generate Xcode project"
-3. Build and open in Unreal Editor
-4. Enable the plugin: **Edit → Plugins → Search "UnrealEngineMCP" → Enable**
-5. Restart Unreal Editor
-
+2. Open your project in Unreal Editor
+3. Enable the plugin: **Edit → Plugins → Search "UnrealEngineMCP" → Enable**
+4. Restart Unreal Editor
 ### 3. Configure MCP Client
 
 #### Claude Desktop
