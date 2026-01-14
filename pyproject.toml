@@ -1,0 +1,51 @@
+[project]
+name = "UnrealEngine5-mcp"
+version = "0.1.0"
+description = "AI-powered Unreal Engine automation with MCP for game development"
+requires-python = ">=3.11,<3.12"
+readme = "README.md"
+
+dependencies = [
+    # MCP framework
+    "mcp>=0.9.0,<2.0.0",
+
+    # BM25 search (no embeddings needed)
+    "rank-bm25>=0.2.2,<0.3.0",
+    "numpy>=1.24.0,<2.0.0",
+
+    # Configuration and utilities
+    "python-dotenv>=1.0.0,<2.0.0",
+    "requests>=2.31.0,<3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+UnrealEngine5-mcp = "main:main"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["MCP_Server", "MCP_Server.rag_system", "MCP_Server.unreal_client", "MCP_Server.utils", "MCP_Server.tools", "MCP_Server.helpers"]
+py-modules = ["main", "config"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"

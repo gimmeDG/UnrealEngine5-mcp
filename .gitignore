@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# Admin scripts 
+scripts/data/*.json
+scripts/data/*.csv
+scripts/data/*.txt
+!scripts/data/.gitkeep
+
+# Cache and logs
+cache/
+logs/
+*.log
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# BM25 cache and test files
+**/bm25_cache/
+test_*.py
+
+# RAG data cache (keep only unreal.py stub)
+**/rag_system/data/*.pkl
+**/rag_system/data/*.json
+**/Rag_System/data/*.pkl
+**/Rag_System/data/*.json
+
+# Claude settings (personal)
+.claude/
+CLAUDE_DESKTOP_SETUP.md
+
+# Unreal Engine generated files
+Plugins/UnrealEngineMCP/Binaries/
+Plugins/UnrealEngineMCP/Intermediate/
+
+# Misc
+nul
+settings.local.json
