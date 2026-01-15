@@ -13,7 +13,7 @@ Includes RAG-powered Python scripting with Unreal Python API documentation.
 
 ![Homing Cluster Grenade](https://github.com/user-attachments/assets/93849722-ffad-4bab-b54c-ade8af825d65)
 
-*Homing Cluster Grenade - Lyra grenade + MCP-generated GAS Blueprints (GA, GE, skill system)*
+*Homing Cluster Grenade - Lyra grenade + MCP-generated Blueprints (GA, skill system)*
 
 ## ⭐ Features
 
