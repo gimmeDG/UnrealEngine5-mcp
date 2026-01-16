@@ -16,6 +16,7 @@ class UK2Node_InputAction;
 class UK2Node_Self;
 class UK2Node_FunctionEntry;
 class UWorldPartition;
+class USCS_Node;
 
 // Pin requirement classification
 enum class EPinRequirement : uint8
@@ -23,6 +24,17 @@ enum class EPinRequirement : uint8
 	Required,
 	Optional,
 	NotConnectable
+};
+
+// Blueprint component search result
+struct UNREALENGINEMCP_API FBlueprintComponentResult
+{
+	UActorComponent* Component = nullptr;
+	USCS_Node* SCSNode = nullptr;
+	FString Source;  // "scs", "cdo", "inherited_override"
+
+	bool IsValid() const { return Component != nullptr; }
+	bool HasSCSNode() const { return SCSNode != nullptr; }
 };
 
 // Instruction context for LLM feedback
@@ -72,6 +84,13 @@ public:
 	static UBlueprint* FindBlueprintByName(const FString& BlueprintName, const FString& BlueprintPath = TEXT("/Game/Blueprints/"));
 	static bool SetObjectProperty(UObject* Object, const FString& PropertyName,
 	                              const TSharedPtr<FJsonValue>& Value, FString& OutErrorMessage);
+
+	// Blueprint component (searches SCS, CDO, and InheritableComponentHandler)
+	static FBlueprintComponentResult FindBlueprintComponent(
+		UBlueprint* Blueprint,
+		const FString& ComponentName,
+		UClass* RequiredClass = nullptr
+	);
 
 	// Graph
 	static UEdGraph* FindOrCreateEventGraph(UBlueprint* Blueprint);

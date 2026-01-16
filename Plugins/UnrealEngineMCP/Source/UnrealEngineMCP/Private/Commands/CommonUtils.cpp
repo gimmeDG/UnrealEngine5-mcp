@@ -4,6 +4,9 @@
 #include "EditorAssetLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/BlueprintGeneratedClass.h"
+#include "Engine/SimpleConstructionScript.h"
+#include "Engine/SCS_Node.h"
+#include "Engine/InheritableComponentHandler.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "EdGraph/EdGraph.h"
@@ -167,6 +170,86 @@ UBlueprint* FCommonUtils::FindBlueprintByName(const FString& BlueprintName, cons
 
 	FString AssetPath = NormalizedPath + BlueprintName;
 	return LoadObject<UBlueprint>(nullptr, *AssetPath);
+}
+
+FBlueprintComponentResult FCommonUtils::FindBlueprintComponent(
+	UBlueprint* Blueprint,
+	const FString& ComponentName,
+	UClass* RequiredClass)
+{
+	FBlueprintComponentResult Result;
+
+	if (!Blueprint || ComponentName.IsEmpty())
+	{
+		return Result;
+	}
+
+	// Search in SCS (components added in this Blueprint)
+	if (Blueprint->SimpleConstructionScript)
+	{
+		for (USCS_Node* Node : Blueprint->SimpleConstructionScript->GetAllNodes())
+		{
+			if (Node && Node->GetVariableName().ToString() == ComponentName)
+			{
+				UActorComponent* Comp = Node->ComponentTemplate;
+				if (Comp && (!RequiredClass || Comp->IsA(RequiredClass)))
+				{
+					Result.Component = Comp;
+					Result.SCSNode = Node;
+					Result.Source = TEXT("scs");
+					return Result;
+				}
+			}
+		}
+	}
+
+	// Search in CDO (components from C++ parent class)
+	if (Blueprint->GeneratedClass)
+	{
+		UObject* CDO = Blueprint->GeneratedClass->GetDefaultObject();
+		if (CDO)
+		{
+			for (TFieldIterator<FObjectProperty> PropIt(Blueprint->GeneratedClass); PropIt; ++PropIt)
+			{
+				FObjectProperty* ObjProp = *PropIt;
+				if (ObjProp->PropertyClass->IsChildOf(UActorComponent::StaticClass()))
+				{
+					UObject* CompObj = ObjProp->GetObjectPropertyValue_InContainer(CDO);
+					if (CompObj && (ObjProp->GetName() == ComponentName || CompObj->GetName() == ComponentName))
+					{
+						UActorComponent* Comp = Cast<UActorComponent>(CompObj);
+						if (Comp && (!RequiredClass || Comp->IsA(RequiredClass)))
+						{
+							Result.Component = Comp;
+							Result.Source = TEXT("cdo");
+							return Result;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Search in InheritableComponentHandler (overridden inherited components)
+	if (Blueprint->InheritableComponentHandler)
+	{
+		for (auto It = Blueprint->InheritableComponentHandler->CreateRecordIterator(); It; ++It)
+		{
+			UActorComponent* Comp = It->ComponentTemplate;
+			const FComponentKey& Key = It->ComponentKey;
+			if (Comp && (Comp->GetName() == ComponentName || Key.GetSCSVariableName().ToString() == ComponentName))
+			{
+				if (!RequiredClass || Comp->IsA(RequiredClass))
+				{
+					Result.Component = Comp;
+					Result.Source = TEXT("inherited_override");
+					return Result;
+				}
+			}
+		}
+	}
+
+	return Result;
 }
 
 // Actor utilities

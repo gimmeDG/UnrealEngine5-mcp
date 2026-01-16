@@ -585,22 +585,15 @@ TSharedPtr<FJsonObject> FBlueprintCommands::HandleSetPhysicsProperties(const TSh
 	}
 
 	// Find the component
-	USCS_Node* ComponentNode = nullptr;
-	for (USCS_Node* Node : Blueprint->SimpleConstructionScript->GetAllNodes())
-	{
-		if (Node && Node->GetVariableName().ToString() == ComponentName)
-		{
-			ComponentNode = Node;
-			break;
-		}
-	}
+	FBlueprintComponentResult CompResult = FCommonUtils::FindBlueprintComponent(
+		Blueprint, ComponentName, UPrimitiveComponent::StaticClass());
 
-	if (!ComponentNode)
+	if (!CompResult.IsValid())
 	{
 		return FCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Component not found: %s"), *ComponentName));
 	}
 
-	UPrimitiveComponent* PrimComponent = Cast<UPrimitiveComponent>(ComponentNode->ComponentTemplate);
+	UPrimitiveComponent* PrimComponent = Cast<UPrimitiveComponent>(CompResult.Component);
 	if (!PrimComponent)
 	{
 		return FCommonUtils::CreateErrorResponse(TEXT("Component is not a primitive component"));
@@ -730,23 +723,15 @@ TSharedPtr<FJsonObject> FBlueprintCommands::HandleSetMeshMaterialColor(const TSh
 	}
 
 	// Find the component
-	USCS_Node* ComponentNode = nullptr;
-	for (USCS_Node* Node : Blueprint->SimpleConstructionScript->GetAllNodes())
-	{
-		if (Node && Node->GetVariableName().ToString() == ComponentName)
-		{
-			ComponentNode = Node;
-			break;
-		}
-	}
+	FBlueprintComponentResult CompResult = FCommonUtils::FindBlueprintComponent(
+		Blueprint, ComponentName, UPrimitiveComponent::StaticClass());
 
-	if (!ComponentNode)
+	if (!CompResult.IsValid())
 	{
 		return FCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Component not found: %s"), *ComponentName));
 	}
 
-	// Cast to PrimitiveComponent
-	UPrimitiveComponent* PrimComponent = Cast<UPrimitiveComponent>(ComponentNode->ComponentTemplate);
+	UPrimitiveComponent* PrimComponent = Cast<UPrimitiveComponent>(CompResult.Component);
 	if (!PrimComponent)
 	{
 		return FCommonUtils::CreateErrorResponse(TEXT("Component is not a primitive component"));
@@ -2636,28 +2621,15 @@ TSharedPtr<FJsonObject> FBlueprintCommands::HandleApplyMaterialToBlueprint(const
 	}
 
 	// Find the component
-	USCS_Node* ComponentNode = nullptr;
-	if (!Blueprint->SimpleConstructionScript)
-	{
-		return FCommonUtils::CreateErrorResponse(TEXT("Invalid blueprint construction script"));
-	}
+	FBlueprintComponentResult CompResult = FCommonUtils::FindBlueprintComponent(
+		Blueprint, ComponentName, UPrimitiveComponent::StaticClass());
 
-	for (USCS_Node* Node : Blueprint->SimpleConstructionScript->GetAllNodes())
-	{
-		if (Node && Node->GetVariableName().ToString() == ComponentName)
-		{
-			ComponentNode = Node;
-			break;
-		}
-	}
-
-	if (!ComponentNode)
+	if (!CompResult.IsValid())
 	{
 		return FCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Component not found: %s"), *ComponentName));
 	}
 
-	// Cast to PrimitiveComponent
-	UPrimitiveComponent* PrimComponent = Cast<UPrimitiveComponent>(ComponentNode->ComponentTemplate);
+	UPrimitiveComponent* PrimComponent = Cast<UPrimitiveComponent>(CompResult.Component);
 	if (!PrimComponent)
 	{
 		return FCommonUtils::CreateErrorResponse(TEXT("Component is not a primitive component"));
@@ -2715,28 +2687,15 @@ TSharedPtr<FJsonObject> FBlueprintCommands::HandleGetBlueprintMaterialInfo(const
 	}
 
 	// Find the component
-	USCS_Node* ComponentNode = nullptr;
-	if (!Blueprint->SimpleConstructionScript)
-	{
-		return FCommonUtils::CreateErrorResponse(TEXT("Invalid blueprint construction script"));
-	}
+	FBlueprintComponentResult CompResult = FCommonUtils::FindBlueprintComponent(
+		Blueprint, ComponentName, UPrimitiveComponent::StaticClass());
 
-	for (USCS_Node* Node : Blueprint->SimpleConstructionScript->GetAllNodes())
-	{
-		if (Node && Node->GetVariableName().ToString() == ComponentName)
-		{
-			ComponentNode = Node;
-			break;
-		}
-	}
-
-	if (!ComponentNode)
+	if (!CompResult.IsValid())
 	{
 		return FCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Component not found: %s"), *ComponentName));
 	}
 
-	// Cast to PrimitiveComponent
-	UPrimitiveComponent* PrimComponent = Cast<UPrimitiveComponent>(ComponentNode->ComponentTemplate);
+	UPrimitiveComponent* PrimComponent = Cast<UPrimitiveComponent>(CompResult.Component);
 	if (!PrimComponent)
 	{
 		return FCommonUtils::CreateErrorResponse(TEXT("Component is not a primitive component"));
@@ -5665,28 +5624,23 @@ TSharedPtr<FJsonObject> FBlueprintCommands::HandleDeleteComponentFromBlueprint(c
 		return FCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Blueprint not found: %s"), *BlueprintName));
 	}
 
-	if (!Blueprint->SimpleConstructionScript)
-	{
-		return FCommonUtils::CreateErrorResponse(TEXT("Blueprint has no SimpleConstructionScript"));
-	}
+	// Find the component
+	FBlueprintComponentResult CompResult = FCommonUtils::FindBlueprintComponent(Blueprint, ComponentName);
 
-	USCS_Node* TargetNode = nullptr;
-	TArray<USCS_Node*> AllNodes = Blueprint->SimpleConstructionScript->GetAllNodes();
-	for (USCS_Node* Node : AllNodes)
-	{
-		if (Node && Node->GetVariableName() == FName(*ComponentName))
-		{
-			TargetNode = Node;
-			break;
-		}
-	}
-
-	if (!TargetNode)
+	if (!CompResult.IsValid())
 	{
 		return FCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Component not found: %s"), *ComponentName));
 	}
 
-	Blueprint->SimpleConstructionScript->RemoveNode(TargetNode);
+	// Only SCS components can be deleted
+	if (!CompResult.HasSCSNode())
+	{
+		return FCommonUtils::CreateErrorResponse(FString::Printf(
+			TEXT("Component '%s' is from %s and cannot be deleted. Only SCS components can be deleted."),
+			*ComponentName, *CompResult.Source));
+	}
+
+	Blueprint->SimpleConstructionScript->RemoveNode(CompResult.SCSNode);
 	FKismetEditorUtilities::CompileBlueprint(Blueprint);
 
 	TSharedPtr<FJsonObject> ResultObj = MakeShared<FJsonObject>();
