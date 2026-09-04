@@ -161,6 +161,20 @@ UBlueprint* FCommonUtils::FindBlueprint(const FString& BlueprintName, const FStr
 
 UBlueprint* FCommonUtils::FindBlueprintByName(const FString& BlueprintName, const FString& BlueprintPath)
 {
+	if (BlueprintName.IsEmpty())
+	{
+		return nullptr;
+	}
+
+	// Callers routinely pass a full object path as BlueprintName
+	// (e.g. "/Game/BP/Char/BP_Char"). Concatenating that onto BlueprintPath
+	// yields "/Game/BP/Char//Game/BP/Char" and crashes the editor, so treat a
+	// leading '/' as an already-qualified path.
+	if (BlueprintName.StartsWith(TEXT("/")))
+	{
+		return LoadObject<UBlueprint>(nullptr, *BlueprintName);
+	}
+
 	// Ensure path ends with /
 	FString NormalizedPath = BlueprintPath;
 	if (!NormalizedPath.EndsWith(TEXT("/")))
@@ -169,6 +183,18 @@ UBlueprint* FCommonUtils::FindBlueprintByName(const FString& BlueprintName, cons
 	}
 
 	FString AssetPath = NormalizedPath + BlueprintName;
+
+	// A malformed path is not recoverable by the caller: LoadObject hits a fatal
+	// check in UObjectGlobals.cpp ("package with name containing double slashes")
+	// that terminates the editor process outright. Refuse it instead.
+	if (AssetPath.Contains(TEXT("//")))
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("FindBlueprintByName: refusing malformed asset path '%s' (name='%s', path='%s')"),
+			*AssetPath, *BlueprintName, *BlueprintPath);
+		return nullptr;
+	}
+
 	return LoadObject<UBlueprint>(nullptr, *AssetPath);
 }
 
