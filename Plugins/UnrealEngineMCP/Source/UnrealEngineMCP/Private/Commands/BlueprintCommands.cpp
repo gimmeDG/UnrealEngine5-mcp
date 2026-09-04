@@ -2399,6 +2399,22 @@ TSharedPtr<FJsonObject> FBlueprintCommands::HandleListBlueprintNodes(const TShar
 	int32 Limit = 50;
 	Params->TryGetNumberField(TEXT("limit"), Limit);
 
+	// An unrecognised node_type previously fell through every branch below with
+	// bMatches left true, so the filter silently did nothing and the caller got
+	// the entire graph back. Fail loudly and name the accepted values instead;
+	// node_class is the parameter for a concrete UClass name.
+	if (!NodeType.IsEmpty()
+		&& NodeType != TEXT("Event")
+		&& NodeType != TEXT("Function")
+		&& NodeType != TEXT("Variable")
+		&& NodeType != TEXT("FlowControl"))
+	{
+		return FCommonUtils::CreateErrorResponse(FString::Printf(
+			TEXT("Unknown node_type '%s'. Valid values: Event, Function, Variable, FlowControl. ")
+			TEXT("To filter on a concrete node class such as 'K2Node_IfThenElse', use node_class."),
+			*NodeType));
+	}
+
 	FString SortBy;
 	Params->TryGetStringField(TEXT("sort_by"), SortBy);
 
